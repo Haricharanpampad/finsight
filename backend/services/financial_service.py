@@ -68,6 +68,15 @@ def create_transaction(db: Session, business_id: int, data: TransactionIn) -> Tr
     return tx
 
 
+def bulk_create_transactions(db: Session, business_id: int, items: list[TransactionIn]) -> list[Transaction]:
+    models = [Transaction(business_id=business_id, **item.model_dump()) for item in items]
+    db.add_all(models)
+    db.commit()
+    for tx in models:
+        db.refresh(tx)
+    return models
+
+
 def update_transaction(db: Session, tx: Transaction, data: TransactionIn) -> Transaction:
     for field, value in data.model_dump().items():
         setattr(tx, field, value)

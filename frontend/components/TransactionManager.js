@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/services/api";
 import { inr, thisMonth, todayISO } from "@/lib/format";
+import FileUploader from "@/components/FileUploader";
 
 const METHODS = ["UPI", "Cash", "Card", "Bank transfer", "Other"];
 
@@ -21,6 +22,7 @@ export default function TransactionManager({ type }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,8 +89,36 @@ export default function TransactionManager({ type }) {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">{isExpense ? "Expense Management" : "Revenue Management"}</h2>
+          <p className="text-xs text-slate-500">Record transactions manually or bulk import from your bank statement.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowUploader((s) => !s)}
+          className={`btn-ghost text-xs flex items-center gap-2 ${showUploader ? "bg-slate-100 border-slate-400 font-semibold text-brand-700" : ""}`}
+        >
+          <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          {showUploader ? "Close Bulk Import" : "Bulk Import (CSV / Excel / PDF)"}
+        </button>
+      </div>
+
+      {showUploader && (
+        <FileUploader
+          defaultType={type}
+          availableCategories={categories}
+          onSuccess={() => {
+            load();
+          }}
+          onClose={() => setShowUploader(false)}
+        />
+      )}
+
       <form onSubmit={submit} className="card">
-        <h2 className="mb-4 font-semibold">{editingId ? `Edit ${noun}` : `Add ${noun}`}</h2>
+        <h2 className="mb-4 font-semibold">{editingId ? `Edit ${noun}` : `Add single ${noun} manually`}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <label className="label">Date</label>

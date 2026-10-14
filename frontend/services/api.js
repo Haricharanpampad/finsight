@@ -48,13 +48,18 @@ async function request(path, { method = "GET", body, params, auth = true } = {})
     });
   }
   const headers = {};
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
   const token = getToken();
   if (auth && token) headers.Authorization = `Bearer ${token}`;
 
   let res;
   try {
-    res = await fetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    res = await fetch(url, {
+      method,
+      headers,
+      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+    });
   } catch {
     throw new Error(`Can't reach the FinSight server at ${API_URL}. Is the backend running?`);
   }
@@ -93,6 +98,12 @@ export const api = {
   listTransactions: (params) => request("/api/transactions", { params }),
   categories: (type) => request("/api/transactions/categories", { params: { type } }),
   createTransaction: (payload) => request("/api/transactions", { method: "POST", body: payload }),
+  uploadTransactions: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request("/api/transactions/upload", { method: "POST", body: formData });
+  },
+  bulkCreateTransactions: (items) => request("/api/transactions/bulk", { method: "POST", body: items }),
   updateTransaction: (id, payload) => request(`/api/transactions/${id}`, { method: "PUT", body: payload }),
   deleteTransaction: (id) => request(`/api/transactions/${id}`, { method: "DELETE" }),
 
