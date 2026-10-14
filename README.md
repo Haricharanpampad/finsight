@@ -1,139 +1,337 @@
-# FinSight — AI business copilot
+# FinSight — AI Business Copilot
 
-Talk to your business numbers. A business owner records revenue and expenses, then asks
-questions in plain language ("Why is my profit lower this month?") and gets answers, explanations
-and suggestions.
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-purple?style=flat)](#license)
 
-**The one rule of the architecture:**
-`Database = source of truth → Analytics engine = calculations → AI = interpretation + conversation → Frontend = human-friendly experience.`
-The AI never does arithmetic. It chooses a tool, the analytics engine computes the number from the database, and the AI explains it.
+> **Talk directly to your business numbers.** FinSight empowers business owners to track revenue and expenses, ingest bank statements, simulate what-if scenarios, and ask questions in plain language (*"Why is my profit lower this month?"*) with zero-hallucination, deterministic financial answers.
 
 ---
 
-## Run it locally
+## 🏛️ Core Architecture Principle
 
-You need **Python 3.11+** and **Node.js 18+**.
+> [!IMPORTANT]  
+> **The Golden Rule:** The AI never performs mental arithmetic.  
+> `Database (Source of Truth) → Analytics Engine (Calculations) → AI Copilot (Interpretation & Reasoning) → Frontend (Clean UI)`
 
-### 1. Backend (FastAPI)
+```
+┌─────────────────────────────────┐
+│     Database (SQLite / PG)      │  ← Single source of truth (tenanted by business_id)
+└───────────────┬─────────────────┘
+                │ Raw records
+┌───────────────▼─────────────────┐
+│     Analytics Engine (Pandas)   │  ← Strict mathematical calculations & aggregations
+└───────────────┬─────────────────┘
+                │ Computed figures & ₹ formatting
+┌───────────────▼─────────────────┐
+│     AI Copilot / Tool Engine    │  ← Gemini API or Deterministic Fallback Rules
+└───────────────┬─────────────────┘
+                │ Natural language explanation & actionable advice
+┌───────────────▼─────────────────┐
+│     Next.js Web Interface       │  ← Human-friendly dashboards & interactive chat
+└─────────────────────────────────┘
+```
+
+When you ask a question:
+1. The AI evaluates the query and triggers an analytical tool (e.g., `get_profit`, `compare_months`, `calculate_scenario`).
+2. The **Analytics Engine** executes deterministic queries and math using Pandas/SQL.
+3. The AI receives verified figures (with standard Indian Rupee `₹` formatting) and synthesizes insights.
+4. If no Gemini API key is configured, FinSight's **built-in rule-based analyst** takes over seamlessly—meaning the app is 100% functional out of the box with zero external API dependencies.
+
+---
+
+## ✨ Key Features
+
+- **💬 Conversational Business Assistant**: Ask financial questions in natural language and receive grounded explanations with follow-up recommendations.
+- **📈 Executive Financial Dashboard**: Real-time month-to-date (MTD) revenue, expenses, net profit, and profit margin trends.
+- **⚖️ True Like-for-Like Comparisons**: On the 14th of the month, "this month" is compared to the first 14 days of last month—eliminating false alarms from early-month fixed costs (e.g., rent).
+- **📂 Universal Statement Ingestion**: Drag-and-drop ingestion of **CSV, Excel (.xlsx, .xls), and PDF bank statements** with auto-column mapping, smart categorization, deduplication preview, and bulk import.
+- **🔮 What-If Financial Simulator**: Model outcomes for price hikes, sales volume shifts, and cost-cutting measures with explicit assumptions stated.
+- **💡 Actionable Profit Advice**: Automated detection of cost spikes, expense leakage, and clear steps to improve margins.
+- **🔒 Multi-Tenant Data Isolation**: Every query, transaction, and calculation is scoped strictly by the authenticated user's `business_id`. Passwords hashed with `bcrypt`, authenticated via JWT.
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- **Python 3.11+**
+- **Node.js 18+** & **npm**
+
+---
+
+### Step 1: Backend Setup (FastAPI)
+
+1. Open a terminal and navigate to the `backend` folder:
+   ```bash
+   cd backend
+   ```
+
+2. Create and activate a Python virtual environment:
+   - **macOS / Linux:**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
+   - **Windows (PowerShell):**
+     ```powershell
+     python -m venv .venv
+     .\.venv\Scripts\Activate.ps1
+     ```
+   - **Windows (Command Prompt):**
+     ```cmd
+     python -m venv .venv
+     .\.venv\Scripts\activate.bat
+     ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure environment variables:
+   - **macOS / Linux:**
+     ```bash
+     cp .env.example .env
+     ```
+   - **Windows:**
+     ```powershell
+     Copy-Item .env.example .env
+     ```
+
+5. Seed demo data (creates sample transactions and demo user):
+   ```bash
+   python seed.py
+   ```
+
+6. Start the API server:
+   ```bash
+   uvicorn main:app --reload --host 127.0.0.1 --port 8000
+   ```
+   * Backend API: `http://localhost:8000`
+   * Interactive Swagger Docs: `http://localhost:8000/docs`
+
+---
+
+### Step 2: Frontend Setup (Next.js)
+
+1. Open a **new terminal window** and navigate to `frontend`:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   - **macOS / Linux:**
+     ```bash
+     cp .env.local.example .env.local
+     ```
+   - **Windows:**
+     ```powershell
+     Copy-Item .env.local.example .env.local
+     ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   * Web App: [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🔑 Demo Account Credentials
+
+A pre-populated demo account is seeded out of the box with realistic revenue and expense history:
+
+| Field | Value |
+|---|---|
+| **Email** | `demo@finsight.app` |
+| **Password** | `demo12345` |
+
+*(You can also click **Register** on the login page to create a fresh business account.)*
+
+---
+
+## 💬 Sample Prompts to Try in the Assistant
+
+Navigate to the **Assistant** tab and try asking:
+
+### 1. Performance & Diagnosis
+- *"How much did I spend this month?"*
+- *"What was my profit last month?"*
+- *"Why is my profit lower this month?"*
+- *"Which expense category is increasing the most?"*
+
+### 2. Strategic Optimization
+- *"What can I do to increase my profit?"*
+- Follow up with: *"Show me how"*
+- *"Where is most of my money going?"*
+
+### 3. What-If Scenarios
+- *"If I reduce my monthly expenses by ₹5,000, what happens to my profit?"*
+- *"What happens if I increase my prices by 5%?"*
+- *"If my sales drop by 10% and costs increase by 5%, what is my projected net margin?"*
+
+### 4. Forecasting
+- *"What could my revenue look like next month?"*
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///./finsight.db` | SQLAlchemy connection string (`postgresql://...` for production) |
+| `JWT_SECRET` | `change-me` | Secret key used to sign authentication tokens |
+| `JWT_EXPIRE_MINUTES` | `720` | JWT expiration time in minutes (12 hours) |
+| `FRONTEND_ORIGINS` | `http://localhost:3000` | Allowed CORS origins (comma-separated for multiple) |
+| `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone used to evaluate "today" and "this month" |
+| `GEMINI_API_KEY` | *(empty)* | Optional. Google Gemini API key for LLM-powered tool calling |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model name |
+
+> [!NOTE]  
+> If `GEMINI_API_KEY` is not provided, FinSight automatically falls back to its deterministic rule-based assistant (`ai/rules.py`). It still queries actual database numbers, provides exact math, and answers all core business inquiries.
+
+### Frontend (`frontend/.env.local`)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Base URL of the FastAPI backend |
+
+---
+
+## 📡 API Reference
+
+All protected endpoints require an `Authorization: Bearer <token>` header obtained from `/api/auth/login`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Register new business account & owner |
+| `POST` | `/api/auth/login` | Authenticate and obtain JWT token |
+| `GET` | `/api/auth/me` | Fetch authenticated user & business details |
+| `GET` | `/api/dashboard` | Fetch aggregated KPI cards and monthly trends |
+| `GET` | `/api/transactions` | Query transactions (filters: `type`, `category`, `month`) |
+| `POST` | `/api/transactions` | Create a single transaction |
+| `POST` | `/api/transactions/upload` | Parse & normalize CSV / Excel / PDF bank statement |
+| `POST` | `/api/transactions/bulk` | Bulk insert verified transactions after preview |
+| `PUT` | `/api/transactions/{id}` | Update existing transaction |
+| `DELETE` | `/api/transactions/{id}` | Remove a transaction |
+| `GET` | `/api/transactions/categories`| Get existing category list for revenue/expense |
+| `GET` | `/api/analytics/monthly` | Retrieve monthly revenue, expense, and profit totals |
+| `GET` | `/api/analytics/profit` | In-depth profit margin & growth breakdown |
+| `GET` | `/api/analytics/expenses` | Category breakdown & growth alerts |
+| `GET` | `/api/analytics/insights` | Actionable profit & cost recommendations |
+| `GET` | `/api/analytics/forecast` | Linear trend projection with labelled assumptions |
+| `POST` | `/api/analytics/scenario` | What-if simulation engine |
+| `POST` | `/api/assistant/chat` | Conversational financial copilot endpoint |
+
+Full interactive API docs and schema definitions are available at `http://localhost:8000/docs`.
+
+---
+
+## 🧪 Running Tests
+
+FinSight includes comprehensive test suites covering Indian currency formatting, like-for-like date comparisons, what-if math, deterministic fallback assistants, and statement ingestion (CSV, XLSX, PDF).
+
+To run the test suite:
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env                 # Windows: copy .env.example .env
-python seed.py                       # creates demo account: demo@finsight.app / demo12345
-uvicorn main:app --reload            # API on http://localhost:8000  (docs: /docs)
+python -m pytest -v
 ```
 
-### 2. Frontend (Next.js)
-
+Or run individual test modules:
 ```bash
-cd frontend
-npm install
-cp .env.local.example .env.local     # Windows: copy .env.local.example .env.local
-npm run dev                          # http://localhost:3000
+python tests/test_analytics.py
+python tests/test_ingestion.py
 ```
-
-Log in with the demo account (or create your own), then try the questions below.
-
-### 3. Tests (analytics + assistant logic)
-
-```bash
-cd backend
-python tests/test_analytics.py       # or: pytest
-```
-
-### Questions to try
-
-- How much did I spend this month? / What was my profit last month?
-- Why is my profit lower this month? / Which expense is increasing the most?
-- What can I do to increase my profit? → then: **show me how**
-- If I reduce my monthly expenses by ₹5,000, what happens to my profit?
-- What happens if I increase my price by 5%?
-- What could my revenue look like next month?
 
 ---
 
-## What we used, and how
+## 📂 Project Directory Structure
 
-| Tool | Where it lives | How we used it |
-| --- | --- | --- |
-| **Next.js 14 (App Router) + React** | `frontend/app`, `frontend/components` | Pages: login, dashboard, expenses, revenue, analytics, assistant. A shared `AppShell` redirects to `/login` when signed out. |
-| **Tailwind CSS** | `frontend/app/globals.css`, class names | Styling. A few reusable classes (`card`, `btn`, `input`) keep pages consistent. |
-| **Recharts** | `RevenueChart.js`, `ExpenseChart.js` | Revenue-vs-expenses-vs-profit chart and a "where is my money going" bar chart. Rising categories are highlighted amber. Every chart is titled with the question it answers. |
-| **`services/api.js`** | `frontend/services` | The only place the browser talks to the backend. Adds the login token, turns API errors into readable messages. |
-| **FastAPI** | `backend/main.py`, `backend/api/*` | REST API: auth, transactions CRUD, dashboard, analytics, assistant chat. Swagger docs at `/docs`. |
-| **Pydantic** | `backend/schemas/*` | Validates every request (positive amounts, valid email, 8+ char password, max lengths). |
-| **SQLAlchemy 2** | `backend/models/*`, `database/connection.py` | ORM models: users, businesses, transactions. SQLite by default; set `DATABASE_URL` to use PostgreSQL (Supabase / Neon) with no code change. |
-| **PostgreSQL** | production database | Relational fit for business → transactions → categories. |
-| **JWT (PyJWT) + bcrypt** | `backend/utils/security.py` | Passwords are stored as bcrypt hashes only. Login returns a signed, expiring token sent as `Authorization: Bearer …`. |
-| **Pandas + NumPy** | `backend/services/analytics_service.py` | The analytics engine: profit, margin, growth, category breakdown, trends, linear-trend forecast, what-if scenarios, recommendations. |
-| **Tool / function calling** | `backend/ai/tools.py`, `ai/agent.py` | 13 tools (`get_profit`, `compare_months`, `get_expense_growth`, `calculate_scenario`, …). The LLM picks a tool and arguments; the engine returns numbers (with ready-formatted ₹ strings); the LLM explains. |
-| **Gemini API** (optional) | `backend/ai/agent.py` | Called from the server only (key in `.env`, never in the browser). Without a key, `ai/rules.py` answers the same questions with the same tools, so the app always works. |
-| **Recommendation engine** | `Analytics.recommendations` | Number-backed advice: which category drives costs, how much could be saved, concrete steps. |
-| **What-if simulator** | `Analytics.scenario`, Analytics page, chat | Price / sales / expense changes → projected profit, with the assumptions stated. |
-
-### Design decisions worth knowing
-
-- **Month-in-progress is compared like-for-like.** On the 7th, "this month" is compared with the first 7 days of last month, not the whole of last month. Recommendations use the last *full* month so early-month noise (rent paid on day 1) doesn't give bad advice.
-- **Forecasts and what-ifs are labelled** as estimates/projections, with their assumptions.
-- **Security:** every query is filtered by the logged-in user's business (the business is never taken from the URL, and other businesses' IDs return 404); passwords hashed; JWT expiry; CORS restricted to `FRONTEND_ORIGINS`; request validation; basic rate limiting on login and chat.
-
----
-
-## API summary
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| POST | `/api/auth/register`, `/api/auth/login` | Create account (+ business) / log in |
-| GET | `/api/auth/me` | Current user + business |
-| GET/POST | `/api/transactions` | List (filter by `type`, `category`, `month`) / create |
-| PUT/DELETE | `/api/transactions/{id}` | Edit / delete |
-| GET | `/api/transactions/categories?type=` | Category suggestions |
-| GET | `/api/dashboard` | Everything the dashboard needs |
-| GET | `/api/analytics/monthly`, `/profit`, `/expenses`, `/insights`, `/forecast` | Analytics |
-| POST | `/api/analytics/scenario` | What-if analysis |
-| POST | `/api/assistant/chat` | Ask FinSight (`{"message": "...", "history": []}`) |
-
-## Enable Gemini
-
-1. Create a key in Google AI Studio.
-2. In `backend/.env` set `GEMINI_API_KEY=...` (and `GEMINI_MODEL` if you want a different model).
-3. Restart the backend. `GET /api/health` shows `"assistant": "gemini"`.
-
-If the Gemini call fails for any reason, the chat quietly falls back to the built-in analyst.
-
-## Deploying
-
-Frontend → Vercel (set `NEXT_PUBLIC_API_URL`). Backend → Render / Railway (`uvicorn main:app --host 0.0.0.0 --port $PORT`;
-set `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_ORIGINS`, `GEMINI_API_KEY`). Database → Supabase / Neon.
-
-## Known limits (deliberately left out of the MVP)
-
-- Voice, CSV/Excel/PDF import, and goals are not built yet (they are in the "later" part of the architecture).
-- Tables are created with `create_all`; use Alembic migrations before changing the schema in production.
-- The login token is kept in `localStorage` for simplicity; for production consider an httpOnly cookie.
-- Rate limiting is in-memory (single instance); use Redis if you run several instances.
-- Revenue and expenses share one `transactions` table (type = revenue/expense) instead of separate `revenue` and `expense_categories` tables.
-
-## Project structure
-
-```
+```text
 finsight/
 ├── backend/
-│   ├── main.py  config.py  seed.py  demo_data.py
-│   ├── api/        auth, transactions, analytics, assistant, deps
-│   ├── models/     user, business, transaction
-│   ├── schemas/    user, transaction
-│   ├── services/   financial_service, analytics_service, recommendation_service, ai_service
-│   ├── ai/         prompts, tools, agent (Gemini), rules (built-in assistant)
-│   ├── database/   connection
-│   ├── utils/      security, ratelimit
-│   └── tests/
+│   ├── main.py                     # FastAPI entry point & CORS configuration
+│   ├── config.py                   # Pydantic Settings & environment variables
+│   ├── seed.py                     # Database initialization and demo account seeding
+│   ├── demo_data.py                # Realistic synthetic transactions
+│   ├── api/                        # REST route controllers
+│   │   ├── auth.py                 # Registration & JWT login
+│   │   ├── transactions.py         # CRUD, file upload & bulk ingestion
+│   │   ├── analytics.py            # Financial reports & scenario endpoints
+│   │   ├── assistant.py            # AI assistant chat endpoint
+│   │   └── deps.py                 # Auth and database dependencies
+│   ├── models/                     # SQLAlchemy ORM models (User, Business, Transaction)
+│   ├── schemas/                    # Pydantic request/response validation schemas
+│   ├── services/                   # Core business logic
+│   │   ├── financial_service.py    # Database queries & CRUD operations
+│   │   ├── analytics_service.py    # Pandas calculations (profit, growth, scenarios)
+│   │   └── ingestion_service.py    # Universal CSV/Excel/PDF parsing engine
+│   ├── ai/                         # Copilot intelligence
+│   │   ├── tools.py                # Tool registry exposing analytical functions
+│   │   ├── agent.py                # Gemini tool-calling integration
+│   │   ├── rules.py                # Deterministic zero-API fallback analyst
+│   │   └── prompts.py              # System prompts & analytical tone guidelines
+│   ├── database/                   # SQLAlchemy engine & session factory
+│   ├── utils/                      # Security (bcrypt, JWT) & rate limiting
+│   └── tests/                      # Pytest test suites
+│
 └── frontend/
-    ├── app/        login, dashboard, expenses, revenue, analytics, assistant
-    ├── components/ AppShell, StatCard, RevenueChart, ExpenseChart, ChatBox, TransactionManager
-    ├── services/   api.js
-    └── lib/        format.js
+    ├── app/                        # Next.js 14 App Router pages
+    │   ├── login/                  # Authentication view
+    │   ├── dashboard/              # High-level KPIs & trend graphs
+    │   ├── expenses/               # Expense ledger & category breakdown
+    │   ├── revenue/                # Revenue ledger & source analysis
+    │   ├── analytics/              # Deep-dive analytics & what-if simulator
+    │   └── assistant/              # Interactive AI chat interface
+    ├── components/                 # Reusable UI components
+    │   ├── AppShell.js             # Navigation sidebar & responsive layout
+    │   ├── FileUploader.js         # Drag-and-drop statement parser modal
+    │   ├── TransactionManager.js   # Ledger table with filters & pagination
+    │   ├── RevenueChart.js         # Revenue vs expense area/bar charts
+    │   ├── ExpenseChart.js         # Category allocation breakdown
+    │   └── ChatBox.js              # Streaming conversational assistant UI
+    ├── services/                   # Client-side API abstraction (`api.js`)
+    └── lib/                        # Formatting utilities (INR ₹ formatting, dates)
 ```
+
+---
+
+## 🚢 Deployment Guidelines
+
+### 1. Database (PostgreSQL)
+- Create a managed PostgreSQL instance on **Supabase** or **Neon**.
+- Update `DATABASE_URL` in your backend environment:
+  ```text
+  DATABASE_URL=postgresql://user:password@host:5432/finsight
+  ```
+
+### 2. Backend (Render / Railway / Fly.io)
+- **Start Command**:
+  ```bash
+  uvicorn main:app --host 0.0.0.0 --port $PORT
+  ```
+- Set production environment variables: `DATABASE_URL`, `JWT_SECRET` (generate a 64-char string), `FRONTEND_ORIGINS` (your frontend domain), and optional `GEMINI_API_KEY`.
+
+### 3. Frontend (Vercel)
+- Deploy the `frontend/` directory to **Vercel**.
+- Configure environment variable:
+  ```text
+  NEXT_PUBLIC_API_URL=https://your-backend-domain.com
+  ```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
